@@ -102,14 +102,14 @@
                 //Get the td propertie
                 var property = $(this).find("td.properties").html();
                 //Get the id for the header select
-                var idForHeader = "headersList-" + i;
+                var idForHeader = "#headersList-" + i;
 
-                var hasValue = $('idForHeader').has('[selected]');
+                var selectedValue = $(idForHeader).val();
                 console.log(idForHeader);
-                console.log(hasValue);
-                if (hasValue) {
+                console.log(selectedValue);
+                if (selectedValue) {
                     //Get the header selected
-                    var header = $('#' + idForHeader + ' :selected').text();
+                    var header = $(idForHeader + ' :selected').text();
                     //Push to the json
                     dataToSave.HeadersMapper.push({ Header: header, Property: property });
                     i++;
