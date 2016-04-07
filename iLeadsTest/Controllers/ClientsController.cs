@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.Script.Serialization;
@@ -45,7 +46,7 @@ namespace iLeadsTest.Controllers
         [HttpPost]
         public string PreUpload()
         {
-            string result = Path.GetTempPath();
+            string tempPath = Path.GetTempPath();
 
             //Check if request has files
             if (Request.Files.Count > 0)
@@ -80,10 +81,15 @@ namespace iLeadsTest.Controllers
                                 var lines = sr.ReadToEnd().Split(new char[] { '\n' });
                                 var linesCount = lines.Count() - 1;
 
+                                //Save the file to use again in tempdata
+                                var guid = Guid.NewGuid();
+                                var myTempFile = Path.Combine(Path.GetTempPath(), guid + fileName);
+                                file.SaveAs(myTempFile);
+
                                 //Create a ViewModel to send to my view
-                                var viewModel = new SaveViewModel() { FileName = fileName, FileClasses = null, Headers = headers, Properties = properties, ClientsCount = linesCount };
+                                var viewModel = new SaveViewModel() { FileName = fileName, FileClasses = null, Headers = headers, Properties = properties, ClientsCount = linesCount, FileId = guid };
                                 var json = new JavaScriptSerializer().Serialize(viewModel);
-                                //Session["file"] = file.InputStream.
+
                                 //Return my viewModel in a json
                                 return json;
                             }
@@ -112,37 +118,43 @@ namespace iLeadsTest.Controllers
         [HttpPost]
         public string Save(SaveViewModel model) 
         {
+            var path = Path.Combine(Path.GetTempPath(), model.FileId .ToString() + model.FileName);
+
             //Get the file from session
-            var file = Session["file"] as string;
-            var hola = 1;
-            //using (var sr = new StreamReader(file.InputStream))
-            //{
-            //    var reader = new CsvReader(sr);
-            //    while(reader.Read())
-            //    {
-            //        var algo = reader.GetField("PIN Number", reader.Row);
-            //    }
-            //    var stringField = reader.;
-            //    var dataFromFile = reader.GetRecords<CsvFileMapper>().ToList();
-
-            //}
-
-            try
+            using (CsvReader reader = new CsvReader(new StreamReader(path)))
             {
-                foreach (var viewModel in model.FileClasses)
+                //variable to count how many Clients has been saved
+                var i = 1;
+                while (reader.Read())
                 {
-                    var client = _mapper.Map(viewModel);
-                    client.FileName = model.FileName;
-                    _unitOfWork.ClientRepository.Insert(client);
-                    _unitOfWork.Save();
+                    //Init new client
+                    var newClient = new Client() { FileName = model.FileName };
+
+                    //Type to use reflection in order to set the properties
+                    var type = newClient.GetType();
+
+                    //Loop trou the mapping config provided by the user
+                    foreach (var mapping in model.HeadersMapper) 
+                    {
+                        var value = reader.GetField(mapping.Header);
+                        var prop = type.GetProperty(mapping.Property);
+                        prop.SetValue(newClient, value, null);
+                    }
+                    try
+                    {
+                        //Save the client
+                        _unitOfWork.ClientRepository.Insert(newClient);
+                        _unitOfWork.Save();
+                    }
+                    catch (Exception e)
+                    {
+                        throw new Exception("Theres been a problem:" + e.Message);
+                    }
+                    i++;
                 }
-            }
-            catch (Exception e)
-            {
-                throw new Exception("Theres been a problem:" + e.Message);
-            }
-            var json = new JavaScriptSerializer().Serialize(model.FileClasses.Count + " clients have been saved!");
-            return json;
+                var json = new JavaScriptSerializer().Serialize(i + " clients have been saved!");
+                return json; 
+            }            
         }
     }
 }

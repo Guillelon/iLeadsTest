@@ -12,6 +12,7 @@
 </div>
 <div id="acceptSection">
     <div id="infoMessage" class="alert alert-info" role="alert"></div>
+    <div id="errorMappingMessage" class="alert alert-danger" role="alert"></div>
     <h4>Please map the headers with the properties to save</h4>
     <table id ="propertyList" class="table table-bordered">
         <tbody>
@@ -57,10 +58,10 @@
                     success: function (result) {
                         var data = $.parseJSON(result);
                         dataToSave = data;
-                        $('#errorMessage').hide();
                         $('#uploadSection').hide();
                         $('#infoMessage').text("There are " + data.ClientsCount + " clients in this file. Are you sure you want to save them?");
                         $('#acceptSection').show();
+                        $('#errorMappingMessage').hide();
 
                         $.each(data.Properties, function (key, value) {
 
@@ -93,39 +94,60 @@
         });
 
         $('#acceptButton').click(function () {
-            console.log(dataToSave);
+            //Counter for control
             var i = 0;
+            //Variable for assurin that user mapped all fields
+            var allFieldsMapped = true;
             $("tr.properties").each(function () {
+                //Get the td propertie
                 var property = $(this).find("td.properties").html();
-                
+                //Get the id for the header select
                 var idForHeader = "headersList-" + i;
-                var header = $('#' + idForHeader + ' :selected').text();
 
-                i++;
-                dataToSave.HeadersMapper.push({ Header: header, Property: property });
-                console.log(dataToSave)
-            });
-            //Disable the buttons just in case annoying users
-            $('#acceptButton').prop('disabled', true);
-            $('#cancelButton').prop('disabled', true);
-            //show loading gif
-            $('#loading').show();
-            $.ajax({
-                url: '/Clients/Save',
-                type: "POST",
-                data: JSON.stringify(dataToSave),
-                contentType: "application/json; charset=utf-8",
-                dataType: "json",
-                success: function (data) {
-                    console.log(data);
-                    //hide and show logic
-                    $('#loading').hide();
-                    $('#confirmationSection').show();
-                    $('#uploadSection').hide();
-                    $('#acceptSection').hide();
-                    $('#sucessMessage').text(data);
+                var hasValue = $('idForHeader').has('[selected]');
+                console.log(idForHeader);
+                console.log(hasValue);
+                if (hasValue) {
+                    //Get the header selected
+                    var header = $('#' + idForHeader + ' :selected').text();
+                    //Push to the json
+                    dataToSave.HeadersMapper.push({ Header: header, Property: property });
+                    i++;
+                }
+                else {
+                    console.log('no hay maped');
+                    allFieldsMapped = false;
+                    return false;
                 }
             });
+            if (allFieldsMapped) {
+                //Disable the buttons just in case annoying users
+                $('#acceptButton').prop('disabled', true);
+                $('#cancelButton').prop('disabled', true);
+                //show loading gif
+                $('#loading').show();
+                $.ajax({
+                    url: '/Clients/Save',
+                    type: "POST",
+                    data: JSON.stringify(dataToSave),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (data) {
+                        console.log(data);
+                        //hide and show logic
+                        $('#loading').hide();
+                        $('#confirmationSection').show();
+                        $('#uploadSection').hide();
+                        $('#acceptSection').hide();
+                        $('#sucessMessage').text(data);
+                    }
+                });
+            }
+            else
+            {
+                $('#errorMappingMessage').show();
+                $('#errorMappingMessage').text("You need to map all the fields!");
+            }
         });
 
         $('#acceptButton2').click(function () {

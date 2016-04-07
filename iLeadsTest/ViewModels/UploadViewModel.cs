@@ -23,6 +23,7 @@ namespace iLeadsTest.ViewModels
         public string[] Properties { get; set; }
         public string[] Headers { get; set; }
         public int ClientsCount { get; set; }
+        public Guid FileId { get; set; }
 
         public List<HeaderMappingViewModel> HeadersMapper { get; set; }
 
