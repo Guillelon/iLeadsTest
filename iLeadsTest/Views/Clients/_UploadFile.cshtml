@@ -57,18 +57,20 @@
                     data: fileData,
                     success: function (result) {
                         var data = $.parseJSON(result);
+                        console.log(data);
                         dataToSave = data;
                         $('#uploadSection').hide();
                         $('#infoMessage').text("There are " + data.ClientsCount + " clients in this file. Are you sure you want to save them?");
                         $('#acceptSection').show();
                         $('#errorMappingMessage').hide();
-
+                        $("#propertyList tbody").empty();
                         $.each(data.Properties, function (key, value) {
 
                             var idForHeader = "headersList-"+key;
                             $("#propertyList tbody").append(
                             "<tr class='properties'>" + "<td class='properties'>" + value + "</td>" + "<td>" + "<select id='" + idForHeader + "' class='form-control headersList'></select>" + "</td>" + "</tr>");
                             
+                            $("#" + idForHeader).empty();
                             $.each(data.Headers, function (i, j) {
                                 $("#" + idForHeader).append($('<option></option>').val(j).html(j));
                             });
