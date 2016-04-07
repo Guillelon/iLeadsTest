@@ -1,0 +1,66 @@
+﻿@model iLeadsTest.ViewModels.SaveViewModel
+@{
+    ViewBag.Title = "Save";
+}
+@using (Html.BeginForm("Save", "Clients", FormMethod.Post))
+{ 
+    <br />
+    <div>
+        <div class="alert alert-info" role="alert">You're about to save @Model.FileClasses.Count clients in the Data Base</div>
+    </div>
+    <div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Pin Number</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Street Address</th>
+                    <th>City</th>
+                    <th>State</th>
+                    <th>Zip Code</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < Model.FileClasses.Count; i++)
+                {
+                    <tr>
+                        <td>@Html.DisplayFor(m => m.FileClasses[i].PinNumberProperty)
+                            @Html.HiddenFor(m => m.FileClasses[i].PinNumberProperty)
+                        </td>
+                        <td>@Html.DisplayFor(m => m.FileClasses[i].FirstNameProperty)
+                            @Html.HiddenFor(m => m.FileClasses[i].FirstNameProperty)
+                        </td>
+                        <td>@Html.DisplayFor(m => m.FileClasses[i].LastNameProperty)
+                            @Html.HiddenFor(m => m.FileClasses[i].LastNameProperty)
+                        </td>
+                        <td>@Html.DisplayFor(m => m.FileClasses[i].StreetAddressProperty)
+                            @Html.HiddenFor(m => m.FileClasses[i].StreetAddressProperty)
+                        </td>
+                        <td>@Html.DisplayFor(m => m.FileClasses[i].CityProperty)
+                            @Html.HiddenFor(m => m.FileClasses[i].CityProperty)
+                        </td>
+                        <td>@Html.DisplayFor(m => m.FileClasses[i].StateProperty)
+                            @Html.HiddenFor(m => m.FileClasses[i].StateProperty)
+                        </td>
+                        <td>@Html.DisplayFor(m => m.FileClasses[i].ZipCodeProperty)
+                            @Html.HiddenFor(m => m.FileClasses[i].ZipCodeProperty)
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @Html.HiddenFor(m=>m.FileName)
+    <input class="btn btn-primary" type="submit" name="Submit" id="Submit" value="Accept" />
+}
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#clientsTable').DataTable({
+            "paging": false,
+            "ordering": false,
+            "info": false
+        });
+    });
+</script>

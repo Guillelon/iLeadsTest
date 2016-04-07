@@ -1,0 +1,136 @@
+﻿@{
+    ViewBag.Title = "_UploadFile";
+}
+<link href="~/Content/bootstrap.min.css" rel="stylesheet" type="text/css" />
+
+
+<div id="uploadSection">
+    <div id="errorMessage" class="alert alert-danger" role="alert"></div>
+    <input type="file" name="FileUpload" id="FileUpload" />
+    <br />
+    <input type="button" id="uploadButton" class="btn btn-primary" value="Upload Files" />
+</div>
+<div id="acceptSection">
+    <div id="infoMessage" class="alert alert-info" role="alert"></div>
+    <h4>Please map the headers with the properties to save</h4>
+    <table id ="propertyList" class="table table-bordered">
+        <tbody>
+        </tbody>
+    </table>
+    <input type="button" id="acceptButton" class="btn btn-success" value="Accept" />
+    <input type="button" id="cancelButton" class="btn btn-danger" value="Cancel" />
+    <img id="loading" src="~/Images/loading.gif" width="30px" height="30px" />
+</div>
+<div id="confirmationSection">
+    <div id="sucessMessage" class="alert alert-success" role="alert"></div>
+    <input type="button" id="acceptButton2" class="btn btn-info" value="Ready" />
+</div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#errorMessage').hide();
+        $('#loading').hide();
+        $('#acceptSection').hide();
+        $('#confirmationSection').hide();
+        var dataToSave = "";
+        $('#uploadButton').click(function () {
+            // Checking whether FormData is available in browser, some dont have it   
+            if (window.FormData !== undefined) {
+
+                //Get the file
+                var fileUpload = $("#FileUpload").get(0);
+                var files = fileUpload.files;
+
+                // Create FormData object  
+                var fileData = new FormData();
+
+                // Looping over all files and add it to FormData object  
+                for (var i = 0; i < files.length; i++) {
+                    fileData.append(files[i].name, files[i]);
+                }
+
+                $.ajax({
+                    url: '/Clients/PreUpload',
+                    type: "POST",
+                    contentType: false,
+                    processData: false,
+                    data: fileData,
+                    success: function (result) {
+                        var data = $.parseJSON(result);
+                        dataToSave = data;
+                        $('#errorMessage').hide();
+                        $('#uploadSection').hide();
+                        $('#infoMessage').text("There are " + data.ClientsCount + " clients in this file. Are you sure you want to save them?");
+                        $('#acceptSection').show();
+
+                        $.each(data.Properties, function (key, value) {
+
+                            var idForHeader = "headersList-"+key;
+                            $("#propertyList tbody").append(
+                            "<tr class='properties'>" + "<td class='properties'>" + value + "</td>" + "<td>" + "<select id='" + idForHeader + "' class='form-control headersList'></select>" + "</td>" + "</tr>");
+                            
+                            $.each(data.Headers, function (i, j) {
+                                $("#" + idForHeader).append($('<option></option>').val(j).html(j));
+                            });
+                            $("#" + idForHeader).val(value);
+                        });
+                    },
+                    error: function (xhr, textStatus, errorThrown) {
+                        $('#errorMessage').show();
+                        $('#errorMessage').text("There has been a problem with your file.");
+                    }
+                });
+            } else {
+                alert("FormData is not supported.");
+            }
+        });
+
+        $('#cancelButton').click(function () {
+            //Cancel everything
+            $('#uploadSection').show();
+            $('#acceptSection').hide();
+            $('#confirmationSection').hide();
+            $('#basicModal').modal('hide');
+        });
+
+        $('#acceptButton').click(function () {
+            console.log(dataToSave);
+            var i = 0;
+            $("tr.properties").each(function () {
+                var property = $(this).find("td.properties").html();
+                
+                var idForHeader = "headersList-" + i;
+                var header = $('#' + idForHeader + ' :selected').text();
+
+                i++;
+                dataToSave.HeadersMapper.push({ Header: header, Property: property });
+                console.log(dataToSave)
+            });
+            //Disable the buttons just in case annoying users
+            $('#acceptButton').prop('disabled', true);
+            $('#cancelButton').prop('disabled', true);
+            //show loading gif
+            $('#loading').show();
+            $.ajax({
+                url: '/Clients/Save',
+                type: "POST",
+                data: JSON.stringify(dataToSave),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (data) {
+                    console.log(data);
+                    //hide and show logic
+                    $('#loading').hide();
+                    $('#confirmationSection').show();
+                    $('#uploadSection').hide();
+                    $('#acceptSection').hide();
+                    $('#sucessMessage').text(data);
+                }
+            });
+        });
+
+        $('#acceptButton2').click(function () {
+            //Send to index
+            window.location.href = '/Clients/'
+        });
+    })
+</script>
