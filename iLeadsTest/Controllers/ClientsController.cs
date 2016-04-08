@@ -150,7 +150,7 @@ namespace iLeadsTest.Controllers
                         _context.Clients.Add(newClient);
 
                         //I go saving in bulks of 100
-                        if (i / 100 == 1) 
+                        if (i % 100 == 0) 
                         {
                             _context.SaveChanges();
                             _context = new DataBaseContext();
