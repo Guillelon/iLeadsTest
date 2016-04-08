@@ -19,12 +19,16 @@ namespace iLeadsTest.Controllers
         private UnitOfWork _unitOfWork;
         private Mapper _mapper;
         private List<CsvFileMapper> _dataFromFile;
+        private DataBaseContext _context;
       
         public ClientsController() 
         {
             _unitOfWork = new UnitOfWork();
             _mapper = new Mapper();
             _dataFromFile = new List<CsvFileMapper>();
+            _context = new DataBaseContext();
+            _context.Configuration.AutoDetectChangesEnabled = false;
+            _context.Configuration.ValidateOnSaveEnabled = false;
         }
 
         public ActionResult Index()
@@ -143,8 +147,14 @@ namespace iLeadsTest.Controllers
                     try
                     {
                         //Save the client
-                        _unitOfWork.ClientRepository.Insert(newClient);
-                        _unitOfWork.Save();
+                        _context.Clients.Add(newClient);
+
+                        //I go saving in bulks of 100
+                        if (i / 100 == 1) 
+                        {
+                            _context.SaveChanges();
+                            _context = new DataBaseContext();
+                        }
                     }
                     catch (Exception e)
                     {
@@ -152,6 +162,8 @@ namespace iLeadsTest.Controllers
                     }
                     i++;
                 }
+                //Save
+                _context.SaveChanges();
                 var json = new JavaScriptSerializer().Serialize(i + " clients have been saved!");
                 return json; 
             }            

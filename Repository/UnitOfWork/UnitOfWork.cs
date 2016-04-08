@@ -43,6 +43,8 @@ namespace Repository
 
         public void Save()
         {
+            _context.Configuration.AutoDetectChangesEnabled = false;
+            _context.Configuration.ValidateOnSaveEnabled = false;
             _context.SaveChanges();
         }
 
